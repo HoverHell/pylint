@@ -191,6 +191,11 @@ class PossibleExcTypesText(unittest.TestCase):
                 raise #@
         ''')
 
+        v = test_utils.extract_node('ValueError')
+        print("inferring valueError", v.inferred())
+
+        v = test_utils.extract_node('RuntimeError')
+        print("inferring runtimeError", v.inferred())
 
         found = possible_exc_types(raise_node)
         expected = set(["RuntimeError", "ValueError"])
