@@ -12,6 +12,43 @@ from pylint.testutils import CheckerTestCase, Message, set_config
 
 import pylint.extensions._check_docs_utils as utils
 
+
+from astroid import decorators
+
+@decorators.raise_if_nothing_inferred
+def unpack_infer(stmt, context=None):
+    """recursively generate nodes inferred by the given statement.
+    If the inferred value is a list or a tuple, recurse on the elements
+    """
+    print("trying to infer", stmt)
+    if isinstance(stmt, (astroid.List, astroid.Tuple)):
+        for elt in stmt.elts:
+            if elt is astroid.Uninferable:
+                yield elt
+                continue
+            for inferred_elt in unpack_infer(elt, context):
+                yield inferred_elt
+        # Explicit StopIteration to return error information, see comment
+        # in raise_if_nothing_inferred.
+        raise StopIteration(dict(node=stmt, context=context))
+    # if inferred is a final node, return it and stop
+    inferred = next(stmt.infer(context))
+    print("I inferred this for node", inferred, stmt)
+    if inferred is stmt:
+        yield inferred
+        # Explicit StopIteration to return error information, see comment
+        # in raise_if_nothing_inferred.
+        raise StopIteration(dict(node=stmt, context=context))
+    # else, infer recursivly, except Uninferable object that should be returned as is
+    print("inferring again everything for", stmt)
+    for inferred in stmt.infer(context):
+        if inferred is astroid.Uninferable:
+            yield inferred
+        else:
+            for inf_inf in unpack_infer(inferred, context):
+                yield inf_inf
+    raise StopIteration(dict(node=stmt, context=context))
+
 def possible_exc_types(node):
     """
     Gets all of the possible raised exception types for the given raise node.
@@ -42,7 +79,7 @@ def possible_exc_types(node):
             print("----> found handler", handler, handler.type)
             print("KeyError mro", KeyError.__mro__)
             print("ValueError mro", ValueError.__mro__)
-            excs = (exc.name for exc in astroid.unpack_infer(handler.type))
+            excs = (exc.name for exc in unpack_infer(handler.type))
 
     excs = set(exc for exc in excs if not utils.node_ignores_exception(node, exc))
     return excs
@@ -157,7 +194,7 @@ class PossibleExcTypesText(unittest.TestCase):
 
         found = possible_exc_types(raise_node)
         expected = set(["RuntimeError", "ValueError"])
-        self.assertEqual(found, expected)
+        self.assertEqual(found, expected, (found, expected))
 
 if __name__ == '__main__':
     unittest.main()
