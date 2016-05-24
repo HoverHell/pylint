@@ -12,6 +12,41 @@ from pylint.testutils import CheckerTestCase, Message, set_config
 
 import pylint.extensions._check_docs_utils as utils
 
+def possible_exc_types(node):
+    """
+    Gets all of the possible raised exception types for the given raise node.
+
+    .. note::
+
+        Caught exception types are ignored.
+
+
+    :param node: The raise node to find exception types for.
+
+    :returns: A list of exception types possibly raised by :param:`node`.
+    :rtype: list(str)
+    """
+    excs = []
+    if isinstance(node.exc, astroid.Name):
+        excs = [node.exc.name]
+    elif (isinstance(node.exc, astroid.Call) and
+          isinstance(node.exc.func, astroid.Name)):
+        excs = [node.exc.func.name]
+    elif node.exc is None:
+        print("----> looking for node", node, node.exc)
+        handler = node.parent
+        while handler and not isinstance(handler, astroid.ExceptHandler):
+            handler = handler.parent
+
+        if handler and handler.type:
+            print("----> found handler", handler, handler.type)
+            print("KeyError mro", KeyError.__mro__)
+            print("ValueError mro", ValueError.__mro__)
+            excs = (exc.name for exc in astroid.unpack_infer(handler.type))
+
+    excs = set(exc for exc in excs if not utils.node_ignores_exception(node, exc))
+    return excs
+
 
 class SpaceIndentationTest(unittest.TestCase):
     """Tests for pylint_plugin.ParamDocChecker"""
@@ -118,7 +153,9 @@ class PossibleExcTypesText(unittest.TestCase):
             except (RuntimeError, ValueError):
                 raise #@
         ''')
-        found = utils.possible_exc_types(raise_node)
+
+
+        found = possible_exc_types(raise_node)
         expected = set(["RuntimeError", "ValueError"])
         self.assertEqual(found, expected)
 
