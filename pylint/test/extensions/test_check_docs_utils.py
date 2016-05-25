@@ -23,10 +23,12 @@ def unpack_infer(stmt, context=None):
     print("trying to infer", stmt)
     if isinstance(stmt, (astroid.List, astroid.Tuple)):
         for elt in stmt.elts:
+            print("Looking at elt", elt)
             if elt is astroid.Uninferable:
                 yield elt
                 continue
             for inferred_elt in unpack_infer(elt, context):
+                print("Inferred the previous elt as", inferred_elt)
                 yield inferred_elt
         # Explicit StopIteration to return error information, see comment
         # in raise_if_nothing_inferred.
@@ -42,10 +44,13 @@ def unpack_infer(stmt, context=None):
     # else, infer recursivly, except Uninferable object that should be returned as is
     print("inferring again everything for", stmt)
     for inferred in stmt.infer(context):
+        print("Inferred this for the previous statement", inferred)
         if inferred is astroid.Uninferable:
             yield inferred
         else:
+            print("Unpack infer the previous statement", inferred)
             for inf_inf in unpack_infer(inferred, context):
+                print("last unpack inferred this for the previous statement", inf_inf)
                 yield inf_inf
     raise StopIteration(dict(node=stmt, context=context))
 
