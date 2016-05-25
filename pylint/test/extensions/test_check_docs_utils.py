@@ -207,7 +207,7 @@ class PossibleExcTypesText(unittest.TestCase):
         x = v.inferred()[0]
         print(x.root().locals)
         print(x.root()['KeyError'])
-        f = x.root()['RuntimeError']
+        f = x.root().locals['RuntimeError']
         for item in f:
            print("Found element as RuntimeError in builtins", item, item.as_string())
 
