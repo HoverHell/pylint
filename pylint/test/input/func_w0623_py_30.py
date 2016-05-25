@@ -15,7 +15,7 @@ def some_function():
 
     try:
         {}["a"]
-    except KeyError, exceptions.RuntimeError: # W0623
+    except KeyError, exceptions.IndexError: # W0623
         pass
     except KeyError, OSError: # W0623
         pass
@@ -42,9 +42,9 @@ exc3 = None
 
 try:
     pass
-except KeyError, exceptions.RuntimeError: # W0623
+except KeyError, exceptions.IndexError: # W0623
     pass
-except KeyError, exceptions.RuntimeError.args: # W0623
+except KeyError, exceptions.IndexError.args: # W0623
     pass
 except KeyError, OSError: # W0623
     pass
