@@ -36,7 +36,7 @@ def unpack_infer(stmt, context=None):
         # in raise_if_nothing_inferred.
         raise StopIteration(dict(node=stmt, context=context))
     # if inferred is a final node, return it and stop
-    infer = stmt.infer(context)
+    infer = stmt.infer()
     first_inferred = next(itertools.islice(infer, 1))
     print("I inferred this for node", first_inferred, stmt)
     if first_inferred is stmt:
