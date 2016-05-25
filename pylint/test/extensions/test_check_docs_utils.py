@@ -15,6 +15,8 @@ import pylint.extensions._check_docs_utils as utils
 
 from astroid import decorators
 
+import itertools
+
 @decorators.raise_if_nothing_inferred
 def unpack_infer(stmt, context=None):
     """recursively generate nodes inferred by the given statement.
@@ -34,16 +36,17 @@ def unpack_infer(stmt, context=None):
         # in raise_if_nothing_inferred.
         raise StopIteration(dict(node=stmt, context=context))
     # if inferred is a final node, return it and stop
-    inferred = next(stmt.infer(context))
-    print("I inferred this for node", inferred, stmt)
-    if inferred is stmt:
-        yield inferred
+    infer = stmt.infer(context)
+    first_inferred = next(itertools.islice(infer, 1))
+    print("I inferred this for node", first_inferred, stmt)
+    if first_inferred is stmt:
+        yield first_inferred
         # Explicit StopIteration to return error information, see comment
         # in raise_if_nothing_inferred.
         raise StopIteration(dict(node=stmt, context=context))
     # else, infer recursivly, except Uninferable object that should be returned as is
     print("inferring again everything for", stmt)
-    for inferred in stmt.infer(context):
+    for inferred in itertools.chain((first_inferred, ), infer):
         print("Inferred this for the previous statement", inferred)
         if inferred is astroid.Uninferable:
             yield inferred
