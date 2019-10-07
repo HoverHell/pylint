@@ -2,6 +2,14 @@
 Pylint's ChangeLog
 ------------------
 
+What's New in Pylint 2.5.0?
+===========================
+
+Release date: TBC
+
+* Can read config from a setup.cfg or pyproject.toml file. Closes #617
+
+
 What's New in Pylint 2.4.2?
 ===========================
 
